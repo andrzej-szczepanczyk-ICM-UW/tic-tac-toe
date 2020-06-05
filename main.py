@@ -28,49 +28,62 @@ SIZE = 4
 # begin language section
 
 # TODO obsługiwać w przyszłości możliwość obsługi innych formatów danych tekstów np csv z 2 kolumnami. Każdy kolejny język byłby inną kolmną
-
-LANGUAGE = 'eng'
-LANGUAGES = ['pl', 'eng']
-SHOW_HISTORY = [["historia gry"], ["history game"]]
-
+# aktorzy - strażnicy
 
 # 1. utrudniają testowanie
 # 2. współbieżność
+# LANGUAGE = 'eng'
+# LANGUAGES = ['pl', 'eng']
+# SHOW_HISTORY = [["historia gry"], ["history game"]]
 
-def set_language(language):
-    global LANGUAGE
-    LANGUAGE = language
+# def set_language(language):
+#     global LANGUAGE
+#     LANGUAGE = language
 
-def print_language(message):
-    print()
-    
-    
+
+# def print_language(message):
+#     print()
+
+
 TRANSLATIONS = {
     'PL': {
-        'start': 'Witaj graczu, wybierz pole'
+        'start': 'Witaj graczu, wybierz pole',
+        'history': 'czy chcesz odtworzyć grę ?? [y/n]',
+        'get_valid_number_alert': 'Wymagana liczba od {} do {}',
+        'ask_repeat': "Podaj jeszcze raz",
+        "move": "Ruch wykonuje gracz {}",
+        'no-free': 'To jest pole jest już zajęte'
     },
     'ENG': {
-        'start': '...'
+        'start': 'Hi, player - choose a field',
+        'history': 'do you want restore a game ?? [y/n]',
+        'get_valid_number_alert': 'Required number from {} to {}',
+        'ask_repeat': "Please write again",
+        'move': "Move makes player {}",
+        'no-free': "This field is just reserved"
     }
 }
 
+
 class Translator:
-    
+
+    # private
     def __init__(self, curr_language, translations):
         self.curr_language = curr_language
         self.translations = translations
-    
+
+    # private
     def get_translation(self, code):
         lang_translations = self.translations.get(self.curr_language)
         return lang_translations.get(code)
-    
-    
-# message = trans.get_translation('start')
-# end language section
+
+    # public
+    def message(self, *args, **kwargs):
+        message = self.get_translation(kwargs["code"])
+        print(message.format(*args))
 
 
-def message(ID_communique, language='pl', **args):
-    print()
+lang = Translator("ENG", TRANSLATIONS)
 
 
 def create_board(size):
@@ -101,7 +114,7 @@ def has_free_field(board):
 
 def is_end(board):
     for row in board:
-        if any([row[i] != EMPTY for i in row]):
+        if any([elem != EMPTY for elem in row]):
             return False
     return True
 
@@ -190,7 +203,7 @@ def wyswietl(plansza):
 
 
 def display_hist(game):
-    print_language(SHOW_HISTORY)
+    # print(TRANSLATIONS['ENG']['history'])
     print(str(game['history']))
 
 
@@ -204,6 +217,7 @@ class BaseUser(abc.ABC):
     def get_position(self, message, board):
         pass
 
+
 ANSWER_YES = "y"
 ANSWER_NO = "n"
 
@@ -212,59 +226,54 @@ class RealUser(BaseUser):  # <---------------------------
 
     def __init__(self, translator):
         self.translator = translator
-        
+
     def get_position(self, message, board):
         USER_MIN_VALUE = 1
         USER_MAX_VALUE = SIZE ** 2
 
         while True:
             human_number = self._get_valid_number_from_range(
-                message, 
-                from_value=USER_MIN_VALUE, 
+                message,
+                from_value=USER_MIN_VALUE,
                 to_value=USER_MAX_VALUE
             )
 
-            position = make_position(human_number, size=len(board)) 
+            position = make_position(human_number, size=len(board))
             if is_free_position(board, position):
                 return position
-            print(trans.get_translation('no-free')
+            print(self.translator.get_translation('no-free'))
             # print(['To jest pole jest już zajęte'],
-                  # ["This field is just reserved"])
+            # ["This field is just reserved"])
 
     def _is_answer(self, s):
         return s in [ANSWER_YES, ANSWER_NO]
 
-
     def _ask_for_history(self):
         while True:
-            print(["czy chcesz odtworzyć grę ?? [y/n]"],
-                  ["do you want restore a game ?? [y/n]"])
-            line = input()  #
+            line = input()
             answer = line.lower().strip()
-            if is_answer(answer):
+            if self._is_answer(answer):
                 return answer == ANSWER_YES
-
 
     def _get_valid_number_from_range(self, message, from_value, to_value):
         while True:
-            number = get_valid_number(message)
+            number = self._get_valid_number(message)
             if from_value <= number <= to_value:  # <-- is_valid_number(x)
                 return number
             else:
-                print(['Wymagana liczba od {} do {}'.format(from_value, to_value)], [
-                       'Required number from {} to {}'.format(from_value, to_value)])
+                lang.message(from_value, to_value,
+                             code="get_valid_number_alert")
 
     def _get_valid_number(self, message):
         while True:
             try:
                 return int(input(message))
             except ValueError:
-                print(['podaj jeszcze raz'], ['write the next time'])
 
-    
-    
-    # def make_game(self, user):
-    #     return make_game(user)
+                lang.message(code="ask_repeat")
+
+                # def make_game(self, user):
+                #     return make_game(user)
 
 
 class DevUser(BaseUser):
@@ -290,7 +299,7 @@ class DevUser(BaseUser):
 class HistoryUserVersion1(DevUser):
 
     def __init__(self, history):
-        human_positions = make_human_positions(history)
+        human_positions = make_human_positions(history, SIZE)
         super().__init__(human_positions)  # woła DevUser.__init__
 
     def get_position(self, message, board):
@@ -356,16 +365,17 @@ class HistoryUser(BaseUser):
 
 # LOGIKA przepyw gry (charakterystyczny dla konsoli), rdzen
 
+# TODO przy okazji się spytać korepetytora o koncepcję "strażnika typów" tzn jaka jest sensowność tego pod kątem oszczędności czasu utrzymywania kodu i szukania błędów ???#altZ - zawijanie klawiszy w vscode
 def update_game(game, console):
     wyswietl(game['board'])
 
     # print(trans.get_translation('make-move'), get_player(game))
-    print('Ruch wykonuje', get_player(game))  # <---
+    lang.message(game["user"], code="move")
     position = game['user'].get_position('Podaj pozycję ', game['board'])
     set_board_value(game['board'], position, get_player(game))
 
     game['history'].append(position)
-    game['running'] = not is_end(game)
+    game['running'] = not is_end(game['board'])
 
     if not game['running']:
         wyswietl(game['board'])
@@ -396,27 +406,27 @@ def make_ttt_program():
         'trans': Translator('pl', TRANSLATIONS),
         'game': make_game(user)
     }
-    
+
 
 def run_program(program):
     run_game(program['game'])
-    
-    
+
+
 def main():
     # user = DevUser(['2', '6', '3', '7', '4', '9', '1'])
     # # user = RealUser()
     # game = make_game(user)
-    
+
     program = make_ttt_program()
     run_program(program)
-    
+
     # run_game(game)
 
     # display_hist(game)  # Pokazywanie na potrzeby developerskie
     # answer = ask_for_history()
 
     # if answer:
-        # run_history(game)
+    # run_history(game)
 
     # for _ in range(5):
     # print(user.get_position())
@@ -500,4 +510,3 @@ main()
 # tryb 3: do N gier pod rząd, dla 3 byłoby tak: [X, O, X, X, O, X, X, X] -> ostatnie N meczy ma znaczenie
 
 # 2h 15min
-
