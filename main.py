@@ -242,8 +242,6 @@ class RealUser(BaseUser):  # <---------------------------
             if is_free_position(board, position):
                 return position
             print(self.translator.get_translation('no-free'))
-            # print(['To jest pole jest już zajęte'],
-            # ["This field is just reserved"])
 
     def _is_answer(self, s):
         return s in [ANSWER_YES, ANSWER_NO]
@@ -360,12 +358,45 @@ class HistoryUser(BaseUser):
 #         'history': self.seq
 #     }
 
+class Competition:
+    __init__(self):
+        self.WINNERS = []
+        self.GAMES = []
+        self.MODE = "1"
 
-# Warto dodać pole size do game, aby była możliwość odpalania różnych gier w ramach tego samego procesu.
+    def add_new_game(self, game, winner):
+        self.WINNERS.append(winner)
+        self.GAMES.append(game)
 
-# LOGIKA przepyw gry (charakterystyczny dla konsoli), rdzen
+    # none, 1, 2
+    def is_winner(self):
 
-# TODO przy okazji się spytać korepetytora o koncepcję "strażnika typów" tzn jaka jest sensowność tego pod kątem oszczędności czasu utrzymywania kodu i szukania błędów ???#altZ - zawijanie klawiszy w vscode
+        switcher = {
+            "1": is_winner_1
+            "2": is_winner_2
+            "3": is_winner_3
+        }
+        return switcher.get(self.MODE)
+
+    def is_winner_1(self):
+        if len(self.WINNERS) > 5
+
+        pass
+
+    def is_winner_2(self):
+        player1 = sum(map(lambda x == 1, self.WINNERS))
+        pass
+
+    def is_winner_3(self):
+        pass
+
+    # Warto dodać pole size do game, aby była możliwość odpalania różnych gier w ramach tego samego procesu.
+
+    # LOGIKA przepyw gry (charakterystyczny dla konsoli), rdzen
+
+    # TODO przy okazji się spytać korepetytora o koncepcję "strażnika typów" tzn jaka jest sensowność tego pod kątem oszczędności czasu utrzymywania kodu i szukania błędów ???#altZ - zawijanie klawiszy w vscode
+
+
 def update_game(game, console):
     wyswietl(game['board'])
 
