@@ -203,7 +203,6 @@ def wyswietl(plansza):
 
 
 def display_hist(game):
-    # print(TRANSLATIONS['ENG']['history'])
     print(str(game['history']))
 
 
