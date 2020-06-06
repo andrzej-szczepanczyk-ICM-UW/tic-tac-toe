@@ -124,9 +124,16 @@ def is_free_position(board, position):
     return board[row][col] == EMPTY
 
 
+# def has_line_hor(n):
+#     for _ in range(n):
+#         if ...:
+#             return True
+#     return False
+
+
 def has_line(board, symbol):
     def hor(n):
-        return all([board[n][it] == symbol for it in range(SIZE)])
+        return all((board[n][it] == symbol for it in range(SIZE)))
 
     def ver(n):
         return all([board[it][n] == symbol for it in range(SIZE)])
@@ -137,9 +144,23 @@ def has_line(board, symbol):
     def cross2():
         return all([board[it][SIZE - 1 - it] == symbol for it in range(SIZE)])
 
-    horizontals = any([hor(it) for it in range(SIZE)])
-    verticals = any([ver(it) for it in range(SIZE)])
-    return any([horizontals, verticals, cross1(), cross2()])
+#     horizontals = any([hor(it) for it in range(SIZE)])
+#     if horizontals:
+#         return True
+
+#     verticals = any([ver(it) for it in range(SIZE)])
+#     if verticals:
+#         return True
+
+#     return cross1() or cross2()
+
+    return (
+        any([hor(it) for it in range(SIZE)]) or
+        any([ver(it) for it in range(SIZE)]) or
+        cross1() or cross2()
+    )
+
+    # return any([horizontals, verticals, cross1(), cross2()])
 
 
 def make_position(human_number, size):
@@ -259,8 +280,22 @@ class RealUser(BaseUser):  # <---------------------------
             if from_value <= number <= to_value:  # <-- is_valid_number(x)
                 return number
             else:
+                # SPOSÓB 1, wystawienine format na zewnątrz
+                translation = lang.get_translation('get_valid_number_alert')
+                message = translation.format(from_value, to_value)
+                print(message)
+
+                # SPOSÓB 2 z klasą, która pilnuje typy
+                alert = GetValidNumberAlert(lang, from_value, to_value)
+                print(alert.message)
+
+                # TUTUJ:
                 lang.message(from_value, to_value,
                              code="get_valid_number_alert")
+
+
+# mypy
+
 
     def _get_valid_number(self, message):
         while True:
@@ -272,6 +307,15 @@ class RealUser(BaseUser):  # <---------------------------
 
                 # def make_game(self, user):
                 #     return make_game(user)
+
+# mypy
+
+
+class GetValidNumberAlert:
+
+    def __init__(self, trans: Translator, from_value: int, to_value: int):
+        translation = trans.get_translation('get_valid_number_alert')
+        self.message = translation.format(from_value, to_value)
 
 
 class DevUser(BaseUser):
@@ -358,11 +402,20 @@ class HistoryUser(BaseUser):
 #         'history': self.seq
 #     }
 
+
+# TODO:
+# tryb 1: do N gier  [X, X, X, O, O] -> X*3 > O*2
+# tryb 2: do N gier przewagi dla 3 byłoby tak: [X, O, X, X, O, X, X] -> X*5, O*2 i jest 3 różnicy
+# tryb 3: do N gier pod rząd, dla 3 byłoby tak: [X, O, X, X, O, X, X, X] -> ostatnie N meczy ma znaczenie
+
+# Tryb
+
 class Competition:
-    __init__(self):
-        self.WINNERS = []
+
+    def __init__(self, mode):
+        self.WINNERS = []  # <-- wewnątrz klas lepiej stosować małe znaki
         self.GAMES = []
-        self.MODE = "1"
+        self.MODE = mode
 
     def add_new_game(self, game, winner):
         self.WINNERS.append(winner)
@@ -372,23 +425,83 @@ class Competition:
     def is_winner(self):
 
         switcher = {
-            "1": is_winner_1
-            "2": is_winner_2
-            "3": is_winner_3
+            "1": self.is_winner_1,
+            "2": self.is_winner_2,
+            "3": self.is_winner_3,
+            "fooboo": self
         }
         return switcher.get(self.MODE)
 
     def is_winner_1(self):
-        if len(self.WINNERS) > 5
+        # if len(self.WINNERS) > 5
 
         pass
 
     def is_winner_2(self):
-        player1 = sum(map(lambda x == 1, self.WINNERS))
+        # player1 = sum(map(lambda x == 1, self.WINNERS))
         pass
 
     def is_winner_3(self):
         pass
+
+    def is_end_1(self):
+        pass
+
+    def is_end_2(self):
+        pass
+
+    def is_end_3(self):
+        pass
+
+    def is_winner(self):
+        switcher = {
+            "1": self.is_end_1,
+            "2": self.is_end_2,
+            "3": self.is_end_3,
+        }
+        return switcher.get(self.MODE)
+
+
+# class Mode:
+
+#     def is_end(self):
+#         pass
+
+#     def is_winner(self):
+#         pass
+
+
+# class Mode1(Competition):
+
+#     def is_end(self):
+#         pass
+
+
+#     def is_winner(self):
+#         print('mode1')
+
+
+# class Mode2(Competition):
+
+#     def is_end(self):
+#         pass
+
+
+#     def is_winner(self):
+#         print('mode2')
+
+
+# class Mode3(Competition):
+
+#     def is_end(self):
+#         pass
+
+#     def is_winner(self):
+#         print('mode3')
+
+
+# mode = Mode1()
+# mode.is_winner()
 
     # Warto dodać pole size do game, aby była możliwość odpalania różnych gier w ramach tego samego procesu.
 
