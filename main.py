@@ -124,9 +124,16 @@ def is_free_position(board, position):
     return board[row][col] == EMPTY
 
 
+# def has_line_hor(n):
+#     for _ in range(n):
+#         if ...:
+#             return True
+#     return False
+
+
 def has_line(board, symbol):
     def hor(n):
-        return all([board[n][it] == symbol for it in range(SIZE)])
+        return all((board[n][it] == symbol for it in range(SIZE)))
 
     def ver(n):
         return all([board[it][n] == symbol for it in range(SIZE)])
@@ -137,9 +144,23 @@ def has_line(board, symbol):
     def cross2():
         return all([board[it][SIZE - 1 - it] == symbol for it in range(SIZE)])
 
-    horizontals = any([hor(it) for it in range(SIZE)])
-    verticals = any([ver(it) for it in range(SIZE)])
-    return any([horizontals, verticals, cross1(), cross2()])
+#     horizontals = any([hor(it) for it in range(SIZE)])
+#     if horizontals:
+#         return True
+
+#     verticals = any([ver(it) for it in range(SIZE)])
+#     if verticals:
+#         return True
+
+#     return cross1() or cross2()
+
+    return (
+        any([hor(it) for it in range(SIZE)]) or
+        any([ver(it) for it in range(SIZE)]) or
+        cross1() or cross2()
+    )
+
+    # return any([horizontals, verticals, cross1(), cross2()])
 
 
 def make_position(human_number, size):
@@ -203,6 +224,7 @@ def wyswietl(plansza):
 
 
 def display_hist(game):
+    # print(TRANSLATIONS['ENG']['history'])
     print(str(game['history']))
 
 
@@ -241,8 +263,6 @@ class RealUser(BaseUser):  # <---------------------------
             if is_free_position(board, position):
                 return position
             print(self.translator.get_translation('no-free'))
-            # print(['To jest pole jest już zajęte'],
-            # ["This field is just reserved"])
 
     def _is_answer(self, s):
         return s in [ANSWER_YES, ANSWER_NO]
@@ -260,8 +280,22 @@ class RealUser(BaseUser):  # <---------------------------
             if from_value <= number <= to_value:  # <-- is_valid_number(x)
                 return number
             else:
+                # SPOSÓB 1, wystawienine format na zewnątrz
+                translation = lang.get_translation('get_valid_number_alert')
+                message = translation.format(from_value, to_value)
+                print(message)
+
+                # SPOSÓB 2 z klasą, która pilnuje typy
+                alert = GetValidNumberAlert(lang, from_value, to_value)
+                print(alert.message)
+
+                # TUTUJ:
                 lang.message(from_value, to_value,
                              code="get_valid_number_alert")
+
+
+# mypy
+
 
     def _get_valid_number(self, message):
         while True:
@@ -273,6 +307,15 @@ class RealUser(BaseUser):  # <---------------------------
 
                 # def make_game(self, user):
                 #     return make_game(user)
+
+# mypy
+
+
+class GetValidNumberAlert:
+
+    def __init__(self, trans: Translator, from_value: int, to_value: int):
+        translation = trans.get_translation('get_valid_number_alert')
+        self.message = translation.format(from_value, to_value)
 
 
 class DevUser(BaseUser):
@@ -359,12 +402,13 @@ class HistoryUser(BaseUser):
 #         'history': self.seq
 #     }
 
+    # Warto dodać pole size do game, aby była możliwość odpalania różnych gier w ramach tego samego procesu.
 
-# Warto dodać pole size do game, aby była możliwość odpalania różnych gier w ramach tego samego procesu.
+    # LOGIKA przepyw gry (charakterystyczny dla konsoli), rdzen
 
-# LOGIKA przepyw gry (charakterystyczny dla konsoli), rdzen
+    # TODO przy okazji się spytać korepetytora o koncepcję "strażnika typów" tzn jaka jest sensowność tego pod kątem oszczędności czasu utrzymywania kodu i szukania błędów ???#altZ - zawijanie klawiszy w vscode
 
-# TODO przy okazji się spytać korepetytora o koncepcję "strażnika typów" tzn jaka jest sensowność tego pod kątem oszczędności czasu utrzymywania kodu i szukania błędów ???#altZ - zawijanie klawiszy w vscode
+
 def update_game(game, console):
     wyswietl(game['board'])
 
